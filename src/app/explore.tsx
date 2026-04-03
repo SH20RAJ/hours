@@ -1,181 +1,182 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppData } from '@/state/tasks-context';
+import { formatDuration } from '@/utils/time';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
+function StatCard({ title, value, subtitle }: { title: string; value: string; subtitle?: string }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={styles.statTitle}>{title}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      {subtitle ? <Text style={styles.statSubtitle}>{subtitle}</Text> : null}
+    </View>
+  );
+}
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+export default function AnalyticsScreen() {
+  const { state, getDailyTrackedSeconds, getWeeklyTrackedSeconds, getWeeklyImprovementPercent, getTaskTrackedSeconds, getTaskTargetSeconds } =
+    useAppData();
+
+  const dailyTracked = getDailyTrackedSeconds();
+  const weeklyTracked = getWeeklyTrackedSeconds();
+  const weeklyGood = getWeeklyTrackedSeconds('good');
+  const weeklyBad = getWeeklyTrackedSeconds('bad');
+  const weeklyImprovement = getWeeklyImprovementPercent();
+  const unrecognizedToday = Math.max(0, 86400 - dailyTracked);
+
+  const fulfilled = state.tasks.filter((task) => {
+    const target = getTaskTargetSeconds(task);
+    if (target === null) {
+      return false;
+    }
+    return getTaskTrackedSeconds(task) >= target;
+  }).length;
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.hero}>
+          <Text style={styles.kicker}>ANALYTICS</Text>
+          <Text style={styles.heroTitle}>Where your time really went.</Text>
+          <Text style={styles.body}>
+            Track commitment fulfillment, category split, and your weekly improvement trend.
+          </Text>
+        </View>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+        <View style={styles.grid}>
+          <StatCard title="Tracked Today" value={formatDuration(dailyTracked)} />
+          <StatCard title="Tracked This Week" value={formatDuration(weeklyTracked)} />
+          <StatCard title="Unrecognized Today" value={formatDuration(unrecognizedToday)} />
+          <StatCard
+            title="Weekly Improvement"
+            value={
+              weeklyImprovement === null
+                ? 'Not enough data'
+                : `${weeklyImprovement >= 0 ? '+' : ''}${weeklyImprovement.toFixed(1)}%`
+            }
+            subtitle="Compared with last week"
+          />
+          <StatCard title="Good Time (Week)" value={formatDuration(weeklyGood)} />
+          <StatCard title="Bad Time (Week)" value={formatDuration(weeklyBad)} />
+          <StatCard
+            title="Promises Fulfilled"
+            value={`${fulfilled} / ${state.tasks.filter((task) => task.targetMinutes !== null).length}`}
+            subtitle="Current cadence window"
+          />
+        </View>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        <View style={styles.listCard}>
+          <Text style={styles.listTitle}>Task Breakdown</Text>
+          {state.tasks.map((task) => {
+            const tracked = getTaskTrackedSeconds(task);
+            const target = getTaskTargetSeconds(task);
+            const extra = target ? Math.max(0, tracked - target) : 0;
+            return (
+              <View key={task.id} style={styles.listRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.taskTitle}>{task.title}</Text>
+                  <Text style={styles.body}>{task.cadence.toUpperCase()} cadence</Text>
+                </View>
+                <View style={styles.rightStat}>
+                  <Text style={styles.taskValue}>{formatDuration(tracked)}</Text>
+                  {extra > 0 ? <Text style={styles.extra}>+{formatDuration(extra)} extra</Text> : null}
+                </View>
+              </View>
+            );
+          })}
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+          {state.tasks.length === 0 ? <Text style={styles.body}>No tasks yet.</Text> : null}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  safe: {
     flex: 1,
+    backgroundColor: '#020617',
   },
-  contentContainer: {
+  scroll: {
+    padding: 16,
+    gap: 14,
+    paddingBottom: 80,
+  },
+  hero: {
+    borderRadius: 18,
+    padding: 16,
+    backgroundColor: '#0f172a',
+    gap: 8,
+  },
+  kicker: {
+    color: '#38bdf8',
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    color: '#f8fafc',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  body: {
+    color: '#cbd5e1',
+  },
+  grid: {
+    gap: 10,
+  },
+  statCard: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
+  },
+  statTitle: {
+    color: '#93c5fd',
+    fontWeight: '700',
+  },
+  statValue: {
+    color: '#f8fafc',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statSubtitle: {
+    color: '#94a3b8',
+    fontSize: 12,
+  },
+  listCard: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+  },
+  listTitle: {
+    color: '#f8fafc',
+    fontWeight: '700',
+    fontSize: 18,
+  },
+  listRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#374151',
+    paddingBottom: 8,
   },
-  centerText: {
-    textAlign: 'center',
+  taskTitle: {
+    color: '#e2e8f0',
+    fontWeight: '600',
   },
-  pressed: {
-    opacity: 0.7,
+  rightStat: {
+    alignItems: 'flex-end',
   },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
+  taskValue: {
+    color: '#f8fafc',
+    fontWeight: '700',
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  extra: {
+    color: '#22c55e',
+    fontSize: 12,
   },
 });

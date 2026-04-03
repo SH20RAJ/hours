@@ -1,56 +1,246 @@
-# Welcome to your Expo app 👋
+# ⏳ Hours
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Measure your time. Keep your promises. Improve your life.**
 
-## Get started
+Hours is a powerful time-tracking and task accountability app that helps you understand **how you actually spend your time vs how you planned to spend it**.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🚀 Overview
 
-2. Start the app
+Hours is not just another task manager.
 
-   ```bash
-   npx expo start
-   ```
+It is a **Time Accountability System** that:
 
-In the output, you'll find options to open the app in a
+* Tracks your work with a live timer
+* Compares **planned vs actual effort**
+* Shows **overperformance and underperformance**
+* Helps you analyze your life through time
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## ✨ Features
 
-## Get a fresh project
+### 🧱 Task Management
 
-When you're ready, run:
+* Create tasks with:
 
-```bash
-npm run reset-project
+  * Daily / Weekly / Monthly time goals
+  * Optional schedules (e.g., 7–9 PM)
+* Edit tasks anytime
+* Organize tasks using tags
+
+### ⏱️ Smart Timer
+
+* Start / Pause / Stop timer per task
+* Runs in background
+* Automatically logs sessions
+
+### 🎯 Goal Tracking
+
+* Example:
+
+  * “DSA → 2 hours daily”
+* Behavior:
+
+  * Completes when target reached
+  * Tracks extra time if exceeded
+
+### 🆓 Free Tasks
+
+* No time limit required
+* Just track what you do
+* Perfect for flexible activities
+
+### 🏷️ Tag System
+
+* Add tags like:
+
+  * #study
+  * #health
+  * #waste
+* Analyze time by category
+
+### 📊 Analytics Dashboard
+
+* Planned vs actual time
+* Task-wise breakdown
+* Tag-wise insights
+* Untracked / unrecognized time
+
+### 📈 Weekly Insights
+
+* Compare performance week-by-week
+* Track improvements
+* Identify patterns
+
+### 🧠 Self Accountability
+
+* See:
+
+  * How much you promised
+  * How much you delivered
+* Build discipline through data
+
+---
+
+## 🧠 Core Philosophy
+
+> “You don’t improve your life by planning better.
+> You improve it by measuring honestly.”
+
+Hours focuses on:
+
+* Awareness
+* Consistency
+* Self-accountability
+
+---
+
+## 🏗️ Tech Stack
+
+* **Frontend:** Next.js (App Router)
+* **Styling:** Tailwind CSS
+* **State Management:** Zustand / Redux
+* **Backend:** Next.js API / Node.js
+* **Database:** PostgreSQL / MongoDB
+* **Mobile (planned):** React Native
+
+---
+
+## 📦 Project Structure (Example)
+
+```
+/app
+  /dashboard
+  /tasks
+  /analytics
+
+/components
+  Timer.tsx
+  TaskCard.tsx
+
+/lib
+  db.ts
+  utils.ts
+
+/api
+  /tasks
+  /sessions
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🧩 Data Models
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Task
 
-## Learn more
+```json
+{
+  "id": "string",
+  "name": "DSA",
+  "type": "structured | free",
+  "target_hours": 2,
+  "target_type": "daily | weekly | monthly",
+  "tags": ["study"],
+  "schedule_time": "19:00"
+}
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### Session
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```json
+{
+  "id": "string",
+  "task_id": "string",
+  "start_time": "timestamp",
+  "end_time": "timestamp",
+  "duration": 120
+}
+```
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## ⚙️ How It Works
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+1. Create a task (with or without time goal)
+2. Start the timer when you begin
+3. Stop when done
+4. Hours logs your session
+5. Analytics updates automatically
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/hours.git
+cd hours
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Run the app
+
+```bash
+npm run dev
+```
+
+---
+
+## 🔥 Future Features
+
+* AI productivity coach
+* Habit scoring system
+* Public accountability sharing
+* Deep analytics (life insights)
+* Idle detection
+* Smart recommendations
+
+---
+
+## 💡 Use Cases
+
+* Students tracking study hours
+* Developers tracking coding time
+* Creators managing content time
+* Anyone improving time discipline
+
+---
+
+## 🧪 MVP Scope
+
+* Task creation
+* Timer system
+* Session logging
+* Basic analytics dashboard
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+* Fork the repo
+* Create a feature branch
+* Submit a pull request
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 💭 Final Thought
+
+Hours is designed to answer one simple question:
+
+> **“Are you spending your time the way you think you are?”**
