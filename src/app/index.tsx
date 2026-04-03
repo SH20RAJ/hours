@@ -1,13 +1,15 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useMemo, useState } from 'react';
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-    useColorScheme,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -38,11 +40,15 @@ const blankForm: TaskFormState = {
 const cadenceOptions: Cadence[] = ['daily', 'weekly', 'monthly', 'free'];
 const categoryOptions: TaskCategory[] = ['good', 'bad', 'neutral'];
 
-function getCategoryBadgeStyle(category: TaskCategory) {
+function getCategoryBadgeStyle(category: TaskCategory, isDark: boolean) {
   return {
     backgroundColor:
-      category === 'good' ? '#123524' : category === 'bad' ? '#4a1f26' : '#2f3242',
+      category === 'good' ? (isDark ? '#064e3b' : '#dcfce7') : category === 'bad' ? (isDark ? '#7f1d1d' : '#fee2e2') : (isDark ? '#334155' : '#f1f5f9'),
   };
+}
+
+function getCategoryTextColor(category: TaskCategory, isDark: boolean) {
+  return category === 'good' ? (isDark ? '#a7f3d0' : '#166534') : category === 'bad' ? (isDark ? '#fecaca' : '#991b1b') : (isDark ? '#cbd5e1' : '#475569');
 }
 
 function TaskCard({
@@ -53,6 +59,7 @@ function TaskCard({
   onStartStop,
   onEdit,
   onDelete,
+  isDark,
 }: {
   task: Task;
   isRunning: boolean;
@@ -61,64 +68,67 @@ function TaskCard({
   onStartStop: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isDark: boolean;
 }) {
   const progress = targetSeconds ? Math.min(100, (trackedSeconds / targetSeconds) * 100) : null;
   const extra = targetSeconds ? Math.max(0, trackedSeconds - targetSeconds) : 0;
   const isComplete = targetSeconds ? trackedSeconds >= targetSeconds : false;
 
+  const cardStyle = [styles.card, isDark ? styles.cardDark : styles.cardLight];
+  const textTitle = [styles.heading, isDark ? styles.textDark : styles.textLight];
+  const textSub = [styles.body, isDark ? styles.subtextDark : styles.subtextLight];
+  const metricBox = [styles.metricCard, isDark ? styles.metricDark : styles.metricLight];
+
   return (
-    <View style={styles.card}>
+    <View style={cardStyle}>
       <View style={styles.rowSpace}>
         <View style={{ flex: 1 }}>
           <View style={styles.titleRow}>
-            <View style={styles.badge}>
-              <Text style={[styles.body, styles.strong]}>{task.cadence.toUpperCase()}</Text>
+            <View style={[styles.badge, isDark ? styles.badgeDark : styles.badgeLight]}>
+              <Text style={[styles.badgeText, isDark ? styles.subtextDark : styles.subtextLight]}>{task.cadence.toUpperCase()}</Text>
             </View>
-            <View style={[styles.badge, getCategoryBadgeStyle(task.category)]}>
-              <Text style={[styles.body, styles.strong]}>{task.category.toUpperCase()}</Text>
+            <View style={[styles.badge, getCategoryBadgeStyle(task.category, isDark)]}>
+              <Text style={[styles.badgeText, { color: getCategoryTextColor(task.category, isDark) }]}>{task.category.toUpperCase()}</Text>
             </View>
           </View>
-          <Text style={styles.heading}>{task.title}</Text>
-          {task.notes ? <Text style={styles.body}>{task.notes}</Text> : null}
-          {task.preferredTime ? <Text style={styles.body}>Do at: {task.preferredTime}</Text> : null}
-          {task.tags.length > 0 ? <Text style={styles.body}>Tags: {task.tags.join(', ')}</Text> : null}
+          <Text style={textTitle}>{task.title}</Text>
+          {task.notes ? <Text style={textSub}>{task.notes}</Text> : null}
+          {task.preferredTime ? <Text style={textSub}>Do at: {task.preferredTime}</Text> : null}
+          {task.tags.length > 0 ? <Text style={textSub}>Tags: {task.tags.join(', ')}</Text> : null}
         </View>
       </View>
 
       <View style={styles.metricsRow}>
-        <Metric label="Spent" value={formatDuration(trackedSeconds)} />
-        <Metric
-          label="Target"
-          value={targetSeconds === null ? 'Free task' : formatMinutes(Math.floor(targetSeconds / 60))}
-        />
-        <Metric label="Status" value={isComplete ? 'Fulfilled' : 'In progress'} />
+        <View style={metricBox}>
+          <Text style={textSub}>Spent</Text>
+          <Text style={[textSub, styles.strong]}>{formatDuration(trackedSeconds)}</Text>
+        </View>
+        <View style={metricBox}>
+          <Text style={textSub}>Target</Text>
+          <Text style={[textSub, styles.strong]}>{targetSeconds === null ? 'Free' : formatMinutes(Math.floor(targetSeconds / 60))}</Text>
+        </View>
+        <View style={metricBox}>
+          <Text style={textSub}>Status</Text>
+          <Text style={[textSub, styles.strong]}>{isComplete ? 'Fulfilled' : 'In progress'}</Text>
+        </View>
       </View>
 
       {progress !== null ? (
         <View style={styles.progressWrap}>
-          <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+          <View style={[styles.progressBg, isDark ? styles.progressBgDark : styles.progressBgLight]}>
+            <View style={[styles.progressFill, { width: `${progress}%` }, isComplete ? styles.progressComplete : null]} />
           </View>
-          <Text style={styles.body}>{Math.round(progress)}%</Text>
+          <Text style={textSub}>{Math.round(progress)}%</Text>
         </View>
       ) : null}
 
-      {extra > 0 ? <Text style={styles.body}>Extra time: {formatDuration(extra)}</Text> : null}
+      {extra > 0 ? <Text style={[styles.body, { color: isDark ? '#4ade80' : '#16a34a' }]}>Extra time: {formatDuration(extra)}</Text> : null}
 
       <View style={styles.actions}>
-        <ActionButton label={isRunning ? 'Stop Timer' : 'Start Timer'} onPress={onStartStop} strong />
-        <ActionButton label="Edit" onPress={onEdit} />
-        <ActionButton label="Delete" onPress={onDelete} tone="danger" />
+        <ActionButton label={isRunning ? 'Stop Timer' : 'Start Timer'} onPress={onStartStop} strong isDark={isDark} />
+        <ActionButton label="Edit" onPress={onEdit} isDark={isDark} />
+        <ActionButton label="Delete" onPress={onDelete} tone="danger" isDark={isDark} />
       </View>
-    </View>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.metricCard}>
-      <Text style={styles.body}>{label}</Text>
-      <Text style={[styles.body, styles.strong]}>{value}</Text>
     </View>
   );
 }
@@ -128,17 +138,28 @@ function ActionButton({
   onPress,
   strong,
   tone,
+  isDark,
 }: {
   label: string;
   onPress: () => void;
   strong?: boolean;
   tone?: 'danger';
+  isDark: boolean;
 }) {
-  const backgroundColor = tone === 'danger' ? '#4a1f26' : strong ? '#1f6feb' : '#1f2937';
+  let bg = isDark ? '#334155' : '#f1f5f9';
+  let tColor = isDark ? '#f8fafc' : '#0f172a';
+
+  if (strong) {
+    bg = isDark ? '#e2e8f0' : '#0f172a';
+    tColor = isDark ? '#0f172a' : '#f8fafc';
+  } else if (tone === 'danger') {
+    bg = isDark ? '#7f1d1d' : '#fee2e2';
+    tColor = isDark ? '#fecaca' : '#991b1b';
+  }
 
   return (
-    <Pressable onPress={onPress} style={[styles.actionButton, { backgroundColor }]}>
-      <Text style={[styles.body, styles.strong]}>{label}</Text>
+    <Pressable onPress={onPress} style={[styles.actionButton, { backgroundColor: bg }]}>
+      <Text style={[styles.badgeText, { color: tColor }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -147,12 +168,19 @@ export default function TaskScreen() {
   const { loaded, state, createTask, updateTask, deleteTask, toggleTimer, getTaskTrackedSeconds, getTaskTargetSeconds } =
     useAppData();
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskFormState>(blankForm);
 
-  const cardTone = colorScheme === 'dark' ? '#0f172a' : '#ffffff';
-  const bg = colorScheme === 'dark' ? '#020617' : '#f8fafc';
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [dateObj, setDateObj] = useState(new Date());
+
+  const bg = isDark ? '#000000' : '#f8fafc';
+  const textTitle = [styles.heroTitle, isDark ? styles.textDark : styles.textLight];
+  const textSub = [styles.body, isDark ? styles.subtextDark : styles.subtextLight];
+  const panelStyling = [styles.panel, isDark ? styles.panelDark : styles.panelLight];
 
   const activeTask = useMemo(() => {
     return state.tasks.find((task) => task.id === state.activeTimer?.taskId) ?? null;
@@ -222,20 +250,21 @@ export default function TaskScreen() {
     setForm(blankForm);
   }
 
+  const onChangeTime = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowTimePicker(false);
+    if (selectedDate) {
+      setDateObj(selectedDate);
+      const timeString = selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setForm((prev) => ({ ...prev, preferredTime: timeString }));
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.hero}>
-          <Text style={styles.heroKicker}>HOURS</Text>
-          <Text style={styles.heroTitle}>Promises to yourself, measured honestly.</Text>
-          <Text style={styles.body}>
-            Create daily, weekly, monthly, or free tasks. Run a timer when you begin and track whether your commitment was fulfilled.
-          </Text>
-        </View>
-
-        <View style={[styles.panel, { backgroundColor: cardTone }]}>
-          <Text style={[styles.body, styles.strong]}>Live timer</Text>
-          <Text style={styles.body}>
+        <View style={panelStyling}>
+          <Text style={[styles.body, styles.strong, isDark ? styles.textDark : styles.textLight]}>Live timer</Text>
+          <Text style={textSub}>
             {activeTask
               ? `Running: ${activeTask.title} (since ${new Date(state.activeTimer!.startedAt).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -244,12 +273,12 @@ export default function TaskScreen() {
               : 'No active timer'}
           </Text>
           <View style={styles.actions}>
-            <ActionButton label="Add Task" onPress={openCreate} strong />
-            {activeTask ? <ActionButton label="Stop Current" onPress={() => toggleTimer(activeTask.id)} /> : null}
+            <ActionButton label={activeTask ? 'Add New' : 'Create Task'} onPress={openCreate} strong isDark={isDark} />
+            {activeTask ? <ActionButton label="Stop Current" onPress={() => toggleTimer(activeTask.id)} isDark={isDark} /> : null}
           </View>
         </View>
 
-        {!loaded ? <Text style={styles.body}>Loading your data...</Text> : null}
+        {!loaded ? <Text style={textSub}>Loading your data...</Text> : null}
 
         {state.tasks.map((task) => (
           <TaskCard
@@ -261,39 +290,47 @@ export default function TaskScreen() {
             onStartStop={() => toggleTimer(task.id)}
             onEdit={() => openEdit(task)}
             onDelete={() => deleteTask(task.id)}
+            isDark={isDark}
           />
         ))}
 
         {loaded && state.tasks.length === 0 ? (
-          <View style={[styles.panel, { backgroundColor: cardTone }]}>
-            <Text style={[styles.body, styles.strong]}>No tasks yet</Text>
-            <Text style={styles.body}>Create your first commitment and start tracking time.</Text>
+          <View style={styles.emptyState}>
+            <Text style={textTitle}>Welcome to Hours.</Text>
+            <Text style={[textSub, { textAlign: 'center' }]}>Create your first commitment and start tracking time honestly.</Text>
           </View>
         ) : null}
       </ScrollView>
 
-      <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)}>
-        <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+      <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)} presentationStyle="pageSheet">
+        <View style={[styles.safe, { backgroundColor: isDark ? '#0f172a' : '#ffffff' }]}>
+          <View style={[styles.modalHeader, isDark ? styles.modalHeaderDark : styles.modalHeaderLight]}>
+            <Text style={[styles.heroTitle, isDark ? styles.textDark : styles.textLight]}>{editTask ? 'Edit Task' : 'New Task'}</Text>
+            <Pressable onPress={() => setShowModal(false)} style={styles.closeBtn}>
+              <Text style={[styles.body, styles.strong, isDark ? styles.textDark : styles.textLight]}>Close</Text>
+            </Pressable>
+          </View>
           <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.heroTitle}>{editTask ? 'Edit Task' : 'Create Task'}</Text>
+            
+            <Label text="Title" isDark={isDark} />
+            <Input value={form.title} onChangeText={(value) => setForm((prev) => ({ ...prev, title: value }))} isDark={isDark} />
 
-            <Label text="Title" />
-            <Input value={form.title} onChangeText={(value) => setForm((prev) => ({ ...prev, title: value }))} />
-
-            <Label text="Notes" />
+            <Label text="Notes (optional)" isDark={isDark} />
             <Input
               value={form.notes}
               multiline
               onChangeText={(value) => setForm((prev) => ({ ...prev, notes: value }))}
+              isDark={isDark}
             />
 
-            <Label text="Tags (comma separated)" />
+            <Label text="Tags (comma separated)" isDark={isDark} />
             <Input
               value={form.tagsCsv}
               onChangeText={(value) => setForm((prev) => ({ ...prev, tagsCsv: value }))}
+              isDark={isDark}
             />
 
-            <Label text="Cadence" />
+            <Label text="Cadence" isDark={isDark} />
             <View style={styles.pillsWrap}>
               {cadenceOptions.map((option) => (
                 <Pill
@@ -301,28 +338,55 @@ export default function TaskScreen() {
                   active={form.cadence === option}
                   label={option}
                   onPress={() => setForm((prev) => ({ ...prev, cadence: option }))}
+                  isDark={isDark}
                 />
               ))}
             </View>
 
             {form.cadence !== 'free' ? (
               <>
-                <Label text="Target minutes" />
+                <Label text="Target minutes" isDark={isDark} />
                 <Input
                   keyboardType="number-pad"
                   value={form.targetMinutes}
                   onChangeText={(value) => setForm((prev) => ({ ...prev, targetMinutes: value }))}
+                  isDark={isDark}
                 />
               </>
             ) : null}
 
-            <Label text="Preferred time (for example 7:30 PM)" />
-            <Input
-              value={form.preferredTime}
-              onChangeText={(value) => setForm((prev) => ({ ...prev, preferredTime: value }))}
-            />
+            <Label text="Preferred time" isDark={isDark} />
+            <View style={styles.timePickerRow}>
+              <Input
+                value={form.preferredTime}
+                onChangeText={(value) => setForm((prev) => ({ ...prev, preferredTime: value }))}
+                isDark={isDark}
+                placeholder="e.g. 7:30 PM"
+                style={{ flex: 1 }}
+              />
+              <Pressable onPress={() => setShowTimePicker(true)} style={[styles.pill, isDark ? styles.pillDark : styles.pillLight]}>
+                <Text style={[styles.badgeText, isDark ? styles.textDark : styles.textLight]}>Pick Time</Text>
+              </Pressable>
+            </View>
+            {Platform.OS === 'ios' && showTimePicker && (
+               <DateTimePicker
+                 value={dateObj}
+                 mode="time"
+                 display="default"
+                 onChange={onChangeTime}
+                 themeVariant={isDark ? 'dark' : 'light'}
+               />
+            )}
+            {Platform.OS !== 'ios' && showTimePicker && (
+                <DateTimePicker
+                  value={dateObj}
+                  mode="time"
+                  display="default"
+                  onChange={onChangeTime}
+                />
+            )}
 
-            <Label text="Category" />
+            <Label text="Category" isDark={isDark} />
             <View style={styles.pillsWrap}>
               {categoryOptions.map((option) => (
                 <Pill
@@ -330,23 +394,23 @@ export default function TaskScreen() {
                   active={form.category === option}
                   label={option}
                   onPress={() => setForm((prev) => ({ ...prev, category: option }))}
+                  isDark={isDark}
                 />
               ))}
             </View>
 
-            <View style={styles.actions}>
-              <ActionButton label={editTask ? 'Save' : 'Create'} onPress={submitForm} strong />
-              <ActionButton label="Cancel" onPress={() => setShowModal(false)} />
+            <View style={[styles.actions, { marginTop: 20 }]}>
+              <ActionButton label={editTask ? 'Save Changes' : 'Create Task'} onPress={submitForm} strong isDark={isDark} />
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
 }
 
-function Label({ text }: { text: string }) {
-  return <Text style={[styles.body, styles.strong]}>{text}</Text>;
+function Label({ text, isDark }: { text: string; isDark: boolean }) {
+  return <Text style={[styles.label, isDark ? styles.textDark : styles.textLight]}>{text}</Text>;
 }
 
 function Input({
@@ -354,19 +418,32 @@ function Input({
   onChangeText,
   multiline,
   keyboardType,
+  isDark,
+  placeholder,
+  style
 }: {
   value: string;
   onChangeText: (value: string) => void;
   multiline?: boolean;
   keyboardType?: 'number-pad';
+  isDark: boolean;
+  placeholder?: string;
+  style?: object;
 }) {
   return (
     <TextInput
-      style={[styles.input, multiline ? styles.inputMultiline : null]}
+      style={[
+        styles.input,
+        isDark ? styles.inputDark : styles.inputLight,
+        multiline ? styles.inputMultiline : null,
+        style
+      ]}
       value={value}
       onChangeText={onChangeText}
       multiline={multiline}
       keyboardType={keyboardType}
+      placeholder={placeholder}
+      placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
     />
   );
 }
@@ -375,14 +452,21 @@ function Pill({
   label,
   active,
   onPress,
+  isDark,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  isDark: boolean;
 }) {
+  const bgActive = isDark ? '#e2e8f0' : '#0f172a';
+  const textActive = isDark ? '#0f172a' : '#f8fafc';
+  const bgInactive = isDark ? '#334155' : '#f1f5f9';
+  const textInactive = isDark ? '#cbd5e1' : '#475569';
+
   return (
-    <Pressable onPress={onPress} style={[styles.pill, active ? styles.pillActive : null]}>
-      <Text style={[styles.body, styles.strong]}>{label}</Text>
+    <Pressable onPress={onPress} style={[styles.pill, { backgroundColor: active ? bgActive : bgInactive }]}>
+      <Text style={[styles.badgeText, { color: active ? textActive : textInactive }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -393,35 +477,42 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
-    gap: 14,
+    gap: 16,
     paddingBottom: 80,
   },
-  hero: {
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: '#0f172a',
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 64,
     gap: 8,
-  },
-  heroKicker: {
-    color: '#93c5fd',
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#f8fafc',
   },
   panel: {
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     gap: 8,
+    borderWidth: 1,
+  },
+  panelDark: {
+    backgroundColor: '#020617',
+    borderColor: '#1e293b',
+  },
+  panelLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0',
   },
   card: {
-    borderRadius: 18,
-    padding: 14,
-    gap: 10,
-    backgroundColor: '#111827',
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+  },
+  cardDark: {
+    backgroundColor: '#0f172a',
+    borderColor: '#1e293b',
+  },
+  cardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0',
   },
   rowSpace: {
     flexDirection: 'row',
@@ -435,22 +526,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badge: {
-    backgroundColor: '#1f2937',
-    borderRadius: 999,
-    paddingHorizontal: 10,
+    borderRadius: 6,
+    paddingHorizontal: 8,
     paddingVertical: 4,
+  },
+  badgeDark: {
+    backgroundColor: '#334155',
+  },
+  badgeLight: {
+    backgroundColor: '#f1f5f9',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   heading: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#f8fafc',
+    fontWeight: '600',
+    letterSpacing: -0.5,
   },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  textDark: { color: '#f8fafc' },
+  textLight: { color: '#0f172a' },
+  subtextDark: { color: '#94a3b8' },
+  subtextLight: { color: '#64748b' },
   body: {
-    color: '#e5e7eb',
     fontSize: 14,
+    lineHeight: 20,
   },
   strong: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
   metricsRow: {
     flexDirection: 'row',
@@ -459,22 +568,35 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     borderRadius: 10,
-    padding: 8,
-    backgroundColor: '#1f2937',
-    gap: 4,
+    padding: 10,
+    gap: 2,
+    borderWidth: 1,
+  },
+  metricDark: {
+    backgroundColor: '#020617',
+    borderColor: '#1e293b',
+  },
+  metricLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
   },
   progressWrap: {
-    gap: 6,
+    gap: 8,
   },
   progressBg: {
-    height: 8,
-    borderRadius: 999,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
-    backgroundColor: '#334155',
   },
+  progressBgDark: { backgroundColor: '#1e293b' },
+  progressBgLight: { backgroundColor: '#e2e8f0' },
   progressFill: {
-    height: 8,
-    backgroundColor: '#22c55e',
+    height: 6,
+    backgroundColor: '#3b82f6',
+    borderRadius: 3,
+  },
+  progressComplete: {
+    backgroundColor: '#10b981',
   },
   actions: {
     flexDirection: 'row',
@@ -482,24 +604,57 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButton: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  modalHeaderDark: {
+    borderColor: '#1e293b',
+  },
+  modalHeaderLight: {
+    borderColor: '#e2e8f0',
+  },
+  closeBtn: {
+    padding: 8,
   },
   modalContent: {
     padding: 16,
-    gap: 8,
+    gap: 12,
     paddingBottom: 80,
   },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+  },
   input: {
-    backgroundColor: '#111827',
-    color: '#e5e7eb',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+  },
+  inputDark: {
+    backgroundColor: '#020617',
+    borderColor: '#1e293b',
+    color: '#f8fafc',
+  },
+  inputLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+    color: '#0f172a',
   },
   inputMultiline: {
-    minHeight: 90,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   pillsWrap: {
@@ -508,12 +663,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#1f2937',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pillActive: {
-    backgroundColor: '#1d4ed8',
+  pillDark: { backgroundColor: '#1e293b' },
+  pillLight: { backgroundColor: '#e2e8f0' },
+  timePickerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
   },
 });
