@@ -1,23 +1,34 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppData } from '@/state/tasks-context';
 import { formatDuration } from '@/utils/time';
 
+import { Box } from '@/components/ui/box';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import { HStack } from '@/components/ui/hstack';
+import { Divider } from '@/components/ui/divider';
+
 function StatCard({ title, value, subtitle }: { title: string; value: string; subtitle?: string }) {
   return (
-    <View style={styles.statCard}>
-      <Text style={styles.statTitle}>{title}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      {subtitle ? <Text style={styles.statSubtitle}>{subtitle}</Text> : null}
-    </View>
+    <Box className="px-4 py-3 bg-background-50 dark:bg-background-950 rounded-xl border border-outline-100 dark:border-outline-800">
+      <VStack space="xs">
+        <Text size="sm" className="font-bold text-primary-500 dark:text-primary-400">{title}</Text>
+        <Heading size="lg">{value}</Heading>
+        {subtitle ? <Text size="xs" className="text-typography-500 dark:text-typography-400">{subtitle}</Text> : null}
+      </VStack>
+    </Box>
   );
 }
 
 export default function AnalyticsScreen() {
   const { state, getDailyTrackedSeconds, getWeeklyTrackedSeconds, getWeeklyImprovementPercent, getTaskTrackedSeconds, getTaskTargetSeconds } =
     useAppData();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const dailyTracked = getDailyTrackedSeconds();
   const weeklyTracked = getWeeklyTrackedSeconds();
@@ -35,17 +46,20 @@ export default function AnalyticsScreen() {
   }).length;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.hero}>
-          <Text style={styles.kicker}>ANALYTICS</Text>
-          <Text style={styles.heroTitle}>Where your time really went.</Text>
-          <Text style={styles.body}>
-            Track commitment fulfillment, category split, and your weekly improvement trend.
-          </Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#f8fafc' }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80, gap: 14 }}>
+        
+        <Box className="p-4 rounded-xl bg-background-0 dark:bg-background-900 border border-outline-200 dark:border-outline-800">
+          <VStack space="sm">
+            <Text size="xs" className="font-bold text-info-500 tracking-[1px]">ANALYTICS</Text>
+            <Heading size="xl">Where your time really went.</Heading>
+            <Text size="sm" className="text-typography-500 dark:text-typography-400">
+              Track commitment fulfillment, category split, and your weekly improvement trend.
+            </Text>
+          </VStack>
+        </Box>
 
-        <View style={styles.grid}>
+        <VStack space="md">
           <StatCard title="Tracked Today" value={formatDuration(dailyTracked)} />
           <StatCard title="Tracked This Week" value={formatDuration(weeklyTracked)} />
           <StatCard title="Unrecognized Today" value={formatDuration(unrecognizedToday)} />
@@ -65,118 +79,38 @@ export default function AnalyticsScreen() {
             value={`${fulfilled} / ${state.tasks.filter((task) => task.targetMinutes !== null).length}`}
             subtitle="Current cadence window"
           />
-        </View>
+        </VStack>
 
-        <View style={styles.listCard}>
-          <Text style={styles.listTitle}>Task Breakdown</Text>
-          {state.tasks.map((task) => {
-            const tracked = getTaskTrackedSeconds(task);
-            const target = getTaskTargetSeconds(task);
-            const extra = target ? Math.max(0, tracked - target) : 0;
-            return (
-              <View key={task.id} style={styles.listRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.taskTitle}>{task.title}</Text>
-                  <Text style={styles.body}>{task.cadence.toUpperCase()} cadence</Text>
-                </View>
-                <View style={styles.rightStat}>
-                  <Text style={styles.taskValue}>{formatDuration(tracked)}</Text>
-                  {extra > 0 ? <Text style={styles.extra}>+{formatDuration(extra)} extra</Text> : null}
-                </View>
-              </View>
-            );
-          })}
+        <Box className="p-4 rounded-xl bg-background-0 dark:bg-background-900 border border-outline-200 dark:border-outline-800 mt-2">
+          <VStack space="md">
+            <Heading size="md">Task Breakdown</Heading>
+            <Divider />
+            {state.tasks.map((task, index) => {
+              const tracked = getTaskTrackedSeconds(task);
+              const target = getTaskTargetSeconds(task);
+              const extra = target ? Math.max(0, tracked - target) : 0;
+              return (
+                <VStack key={task.id} space="sm">
+                  <HStack className="justify-between items-center">
+                    <VStack space="xs" className="flex-1">
+                      <Text className="font-bold text-typography-900 dark:text-typography-100">{task.title}</Text>
+                      <Text size="xs" className="uppercase text-typography-500 dark:text-typography-400">{task.cadence} cadence</Text>
+                    </VStack>
+                    <VStack space="xs" className="items-end">
+                      <Text className="font-bold">{formatDuration(tracked)}</Text>
+                      {extra > 0 ? <Text size="xs" className="text-success-500 dark:text-success-400">+{formatDuration(extra)} extra</Text> : null}
+                    </VStack>
+                  </HStack>
+                  {index < state.tasks.length - 1 ? <Divider /> : null}
+                </VStack>
+              );
+            })}
 
-          {state.tasks.length === 0 ? <Text style={styles.body}>No tasks yet.</Text> : null}
-        </View>
+            {state.tasks.length === 0 ? <Text size="sm" className="text-typography-500 dark:text-typography-400">No tasks yet.</Text> : null}
+          </VStack>
+        </Box>
+        
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
-  scroll: {
-    padding: 16,
-    gap: 14,
-    paddingBottom: 80,
-  },
-  hero: {
-    borderRadius: 18,
-    padding: 16,
-    backgroundColor: '#0f172a',
-    gap: 8,
-  },
-  kicker: {
-    color: '#38bdf8',
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    color: '#f8fafc',
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  body: {
-    color: '#cbd5e1',
-  },
-  grid: {
-    gap: 10,
-  },
-  statCard: {
-    backgroundColor: '#111827',
-    borderRadius: 14,
-    padding: 14,
-    gap: 4,
-  },
-  statTitle: {
-    color: '#93c5fd',
-    fontWeight: '700',
-  },
-  statValue: {
-    color: '#f8fafc',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  statSubtitle: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
-  listCard: {
-    backgroundColor: '#111827',
-    borderRadius: 14,
-    padding: 14,
-    gap: 10,
-  },
-  listTitle: {
-    color: '#f8fafc',
-    fontWeight: '700',
-    fontSize: 18,
-  },
-  listRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#374151',
-    paddingBottom: 8,
-  },
-  taskTitle: {
-    color: '#e2e8f0',
-    fontWeight: '600',
-  },
-  rightStat: {
-    alignItems: 'flex-end',
-  },
-  taskValue: {
-    color: '#f8fafc',
-    fontWeight: '700',
-  },
-  extra: {
-    color: '#22c55e',
-    fontSize: 12,
-  },
-});
