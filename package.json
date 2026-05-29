@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preview": "next build && wrangler dev",
+    "deploy": "next build && wrangler deploy"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.1.2",
@@ -40,6 +41,7 @@
     "eslint-config-next": "14.2.18",
     "postcss": "8.4.49",
     "tailwindcss": "3.4.15",
-    "typescript": "5.6.3"
+    "typescript": "5.6.3",
+    "wrangler": "4.69.0"
   }
 }

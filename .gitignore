@@ -7,6 +7,10 @@
 /.next/
 /out/
 
+# cloudflare wrangler
+.wrangler/
+.dev.vars
+
 # production
 /build
 
