@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDataStore } from "@/lib/stores/data-store";
 import { useTimerStore } from "@/lib/stores/timer-store";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 /**
  * Boots the local-first data layer: hydrates Dexie-backed stores, restores any
@@ -38,5 +39,5 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return () => mql.removeEventListener("change", handler);
   }, [applyResolvedTheme]);
 
-  return <>{children}</>;
+  return <AuthProvider>{children}</AuthProvider>;
 }

@@ -79,6 +79,16 @@ interface DataState {
   exportData: () => Promise<ExportPayload>;
   importData: (raw: string) => Promise<void>;
 
+  /** Replace all local data with merged server state (used by the sync engine). */
+  applyServerState: (state: {
+    sessions: TimeSession[];
+    categories: Category[];
+    goals: Goal[];
+    settings: Omit<AppSettings, "id"> | null;
+  }) => Promise<void>;
+  /** True when the device has no real data yet (fresh install / only defaults). */
+  isPristine: () => boolean;
+
   getCategory: (id: string) => Category | undefined;
   sessionsUsingCategory: (id: string) => Promise<number>;
 }
@@ -231,6 +241,36 @@ export const useDataStore = create<DataState>((set, get) => ({
       getSettings(),
     ]);
     set({ sessions, categories, goals, settings });
+  },
+
+  applyServerState: async (state) => {
+    // Reuse the import transaction: it atomically replaces all tables. We map
+    // server settings (which carry no local id) back onto the fixed settings id.
+    await importAllData({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      sessions: state.sessions,
+      categories: state.categories,
+      goals: state.goals,
+      settings: state.settings
+        ? { ...state.settings, id: SETTINGS_ID }
+        : null,
+    });
+    await seedIfNeeded(); // guarantee defaults exist if server sent nothing
+    const [sessions, categories, goals, settings] = await Promise.all([
+      getAllSessions(),
+      getAllCategories(),
+      getAllGoals(),
+      getSettings(),
+    ]);
+    set({ sessions, categories, goals, settings });
+  },
+
+  isPristine: () => {
+    const s = get();
+    // Default seeding adds categories + a settings row but never sessions/goals.
+    // So "pristine" = the user hasn't accumulated any real data yet.
+    return s.sessions.length === 0 && s.goals.length === 0;
   },
 
   getCategory: (id) => get().categories.find((c) => c.id === id),

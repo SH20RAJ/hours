@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useDataStore } from "@/lib/stores/data-store";
 import { NAV_ITEMS } from "./nav-config";
+import { AuthMenu } from "@/components/auth/auth-menu";
 
 /**
  * Compact sticky header for mobile only. Shows the current section title, the
@@ -60,6 +61,7 @@ export function MobileHeader() {
               <Settings className="h-5 w-5" />
             </Link>
           </Button>
+          <AuthMenu variant="compact" />
         </div>
       </div>
     </header>

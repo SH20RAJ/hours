@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-config";
+import { AuthMenu } from "@/components/auth/auth-menu";
 
 /**
  * Persistent left sidebar for >=lg screens. Highlights the active route and
@@ -48,9 +49,12 @@ export function DesktopSidebar() {
         })}
       </nav>
 
-      <p className="px-3 text-xs text-muted-foreground">
-        See your life in hours.
-      </p>
+      <div className="mt-auto space-y-3">
+        <AuthMenu variant="sidebar" />
+        <p className="px-3 text-xs text-muted-foreground">
+          See your life in hours.
+        </p>
+      </div>
     </aside>
   );
 }

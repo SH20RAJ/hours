@@ -31,6 +31,7 @@ import { CategoryDialog } from "@/components/settings/category-dialog";
 import { DeleteCategoryDialog } from "@/components/settings/delete-category-dialog";
 import { ExportImportPanel } from "@/components/settings/export-import-panel";
 import { IdentityMixEditor } from "@/components/settings/identity-mix-editor";
+import { SyncSettingsCard } from "@/components/settings/sync-settings-card";
 
 import { useDataStore } from "@/lib/stores/data-store";
 import { useUiStore, toast } from "@/lib/stores/ui-store";
@@ -68,6 +69,14 @@ export default function SettingsPage() {
           Make Hours fit the way you work.
         </p>
       </header>
+
+      {/* Cloud sync */}
+      <SettingsSection
+        title="Cloud sync"
+        description="Back up your data and sync it across devices. Optional — Hours works fully offline."
+      >
+        <SyncSettingsCard />
+      </SettingsSection>
 
       {/* Preferences */}
       <SettingsSection title="Preferences">
