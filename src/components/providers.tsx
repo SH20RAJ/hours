@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDataStore } from "@/lib/stores/data-store";
 import { useTimerStore } from "@/lib/stores/timer-store";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { useHabitsStore } from "@/lib/stores/habits-store";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
 /**
@@ -16,6 +17,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const settingsTheme = useDataStore((s) => s.settings.theme);
   const dataHydrated = useDataStore((s) => s.hydrated);
   const hydrateTimer = useTimerStore((s) => s.hydrate);
+  const hydrateHabits = useHabitsStore((s) => s.hydrate);
   const setTheme = useUiStore((s) => s.setTheme);
   const applyResolvedTheme = useUiStore((s) => s.applyResolvedTheme);
 
@@ -23,7 +25,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void hydrateData();
     void hydrateTimer();
-  }, [hydrateData, hydrateTimer]);
+    void hydrateHabits();
+  }, [hydrateData, hydrateTimer, hydrateHabits]);
 
   // Mirror persisted theme into the UI store once data is ready.
   useEffect(() => {

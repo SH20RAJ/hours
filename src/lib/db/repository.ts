@@ -176,12 +176,15 @@ export async function clearActiveTimer(): Promise<void> {
 
 export async function exportAllData(): Promise<ExportPayload> {
   const db = getDb();
-  const [sessions, categories, goals, settings] = await Promise.all([
-    db.sessions.toArray(),
-    db.categories.toArray(),
-    db.goals.toArray(),
-    db.settings.get(SETTINGS_ID),
-  ]);
+  const [sessions, categories, goals, settings, habits, habitEntries] =
+    await Promise.all([
+      db.sessions.toArray(),
+      db.categories.toArray(),
+      db.goals.toArray(),
+      db.settings.get(SETTINGS_ID),
+      db.habits.toArray(),
+      db.habitEntries.toArray(),
+    ]);
   return {
     version: DATA_VERSION,
     exportedAt: nowIso(),
@@ -189,6 +192,8 @@ export async function exportAllData(): Promise<ExportPayload> {
     categories,
     goals,
     settings: settings ?? null,
+    habits,
+    habitEntries,
   };
 }
 
@@ -216,6 +221,10 @@ export function validateImport(data: unknown): ExportPayload {
     categories: obj.categories as Category[],
     goals: Array.isArray(obj.goals) ? (obj.goals as Goal[]) : [],
     settings: (obj.settings as AppSettings | null) ?? null,
+    habits: Array.isArray(obj.habits) ? (obj.habits as ExportPayload["habits"]) : [],
+    habitEntries: Array.isArray(obj.habitEntries)
+      ? (obj.habitEntries as ExportPayload["habitEntries"])
+      : [],
   };
 }
 
@@ -248,7 +257,15 @@ export async function clearAllData(): Promise<void> {
   const db = getDb();
   await db.transaction(
     "rw",
-    [db.sessions, db.categories, db.goals, db.settings, db.activeTimer],
+    [
+      db.sessions,
+      db.categories,
+      db.goals,
+      db.settings,
+      db.activeTimer,
+      db.habits,
+      db.habitEntries,
+    ],
     async () => {
       await Promise.all([
         db.sessions.clear(),
@@ -256,10 +273,29 @@ export async function clearAllData(): Promise<void> {
         db.goals.clear(),
         db.settings.clear(),
         db.activeTimer.clear(),
+        db.habits.clear(),
+        db.habitEntries.clear(),
       ]);
     },
   );
   await seedIfNeeded();
+}
+
+/**
+ * Replace all habits + entries with the imported set. Kept SEPARATE from
+ * `importAllData` because that function is also used by cloud sync, which has no
+ * habit data — folding habits in there would let a sync pull wipe them.
+ */
+export async function replaceHabits(
+  habits: ExportPayload["habits"],
+  entries: ExportPayload["habitEntries"],
+): Promise<void> {
+  const db = getDb();
+  await db.transaction("rw", [db.habits, db.habitEntries], async () => {
+    await Promise.all([db.habits.clear(), db.habitEntries.clear()]);
+    if (habits?.length) await db.habits.bulkAdd(habits);
+    if (entries?.length) await db.habitEntries.bulkAdd(entries);
+  });
 }
 
 export async function bulkInsertSessions(sessions: TimeSession[]): Promise<void> {

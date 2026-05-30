@@ -28,6 +28,7 @@ import {
   importAllData,
   isIndexedDbAvailable,
   reassignSessions,
+  replaceHabits,
   saveSettings,
   seedIfNeeded,
   updateCategory as dbUpdateCategory,
@@ -221,6 +222,8 @@ export const useDataStore = create<DataState>((set, get) => ({
       getSettings(),
     ]);
     set({ sessions, categories, goals, settings });
+    // clearAllData also wipes habit tables; refresh that store too.
+    void import("./habits-store").then((m) => m.useHabitsStore.getState().hydrate());
   },
 
   exportData: async () => exportAllData(),
@@ -234,6 +237,10 @@ export const useDataStore = create<DataState>((set, get) => ({
     }
     const payload = validateImport(parsed);
     await importAllData(payload);
+    // Habits live outside the sync-shared import transaction; restore them here
+    // for the JSON-import path. Then refresh the habits store via a lazy import
+    // to avoid a static import cycle between the two stores.
+    await replaceHabits(payload.habits ?? [], payload.habitEntries ?? []);
     const [sessions, categories, goals, settings] = await Promise.all([
       getAllSessions(),
       getAllCategories(),
@@ -241,6 +248,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       getSettings(),
     ]);
     set({ sessions, categories, goals, settings });
+    void import("./habits-store").then((m) => m.useHabitsStore.getState().hydrate());
   },
 
   applyServerState: async (state) => {

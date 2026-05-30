@@ -3,6 +3,8 @@ import type {
   AppSettings,
   Category,
   Goal,
+  Habit,
+  HabitEntry,
   TimeSession,
   TimerState,
 } from "@/lib/types";
@@ -19,6 +21,8 @@ export class HoursDatabase extends Dexie {
   goals!: Table<Goal, string>;
   settings!: Table<AppSettings, string>;
   activeTimer!: Table<TimerState, string>;
+  habits!: Table<Habit, string>;
+  habitEntries!: Table<HabitEntry, string>;
 
   constructor() {
     super(DB_NAME);
@@ -28,6 +32,13 @@ export class HoursDatabase extends Dexie {
       goals: "id, type, period, isActive",
       settings: "id",
       activeTimer: "id",
+    });
+    // v2 adds habit tracking. Additive only — existing stores are unchanged, so
+    // Dexie keeps all prior data and just creates the two new tables. The
+    // [habitId+date] compound index makes per-day lookups and toggles fast.
+    this.version(2).stores({
+      habits: "id, sortOrder, archived, createdAt",
+      habitEntries: "id, habitId, date, [habitId+date]",
     });
   }
 }

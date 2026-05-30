@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  Grid3x3,
   CalendarClock,
   BarChart3,
   Target,
@@ -18,6 +19,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Today", icon: LayoutDashboard },
+  { href: "/habits", label: "Habits", icon: Grid3x3 },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/insights", label: "Insights", icon: BarChart3 },
   { href: "/goals", label: "Goals", icon: Target },
