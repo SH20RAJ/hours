@@ -1,7 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-		<rect width="512" height="512" rx="96" fill="#111513"/>
-		<circle cx="256" cy="256" r="162.66666666666666" fill="none" stroke="#ef8f45" stroke-width="36" stroke-linecap="round"/>
-		<path d="M256 132v126l92 58" fill="none" stroke="#f5f6f1" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-		<circle cx="256" cy="256" r="19" fill="#52b788"/>
-		<text x="256" y="420" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" fill="#f5f6f1">Hours</text>
+		<rect width="512" height="512" rx="128" fill="#111513"/>
+		
+		<!-- Background Time Progress ring (Subtle dark ring, orange progress) -->
+		<circle cx="256" cy="256" r="200" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16" />
+		<circle cx="256" cy="256" r="200" fill="none" stroke="#ef8f45" stroke-width="16" stroke-dasharray="320 1256" stroke-linecap="round" transform="rotate(-90 256 256)" />
+		
+		<!-- Stylized minimal hourglass -->
+		<!-- Hourglass bulbs -->
+		<path d="M 180 156 C 180 236, 230 248, 256 256 C 282 248, 332 236, 332 156 Z" fill="none" stroke="#f5f6f1" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" />
+		<path d="M 180 356 C 180 276, 230 264, 256 256 C 282 264, 332 276, 332 356 Z" fill="none" stroke="#f5f6f1" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" />
+		
+		<!-- Top & Bottom plates -->
+		<path d="M 160 146 H 352" stroke="#f5f6f1" stroke-width="24" stroke-linecap="round" />
+		<path d="M 160 366 H 352" stroke="#f5f6f1" stroke-width="24" stroke-linecap="round" />
+		
+		<!-- Falling sand details -->
+		<!-- Upper sand level (Draining) -->
+		<path d="M 206 186 Q 256 206 306 186 Q 256 242 256 256 Z" fill="#ef8f45" opacity="0.85"/>
+		<!-- Lower sand level (Accumulating) -->
+		<path d="M 198 346 C 210 316, 302 316, 314 346 Z" fill="#ef8f45" />
+		<!-- Center sand drop -->
+		<circle cx="256" cy="256" r="14" fill="#52b788" />
+		<!-- Small falling sand stream -->
+		<path d="M 256 244 V 324" stroke="#ef8f45" stroke-width="8" stroke-dasharray="14 10" stroke-linecap="round" />
 	</svg>

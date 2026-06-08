@@ -141,6 +141,7 @@ select:focus-visible {
 }
 
 .summary-band > div,
+.summary-card-with-share,
 .section-block,
 .focus-panel,
 .active-card,
@@ -153,7 +154,8 @@ select:focus-visible {
 	box-shadow: var(--shadow);
 }
 
-.summary-band > div {
+.summary-band > div,
+.summary-card-with-share {
 	min-width: 0;
 	padding: 14px;
 }
@@ -166,8 +168,7 @@ select:focus-visible {
 }
 
 .section-block,
-.focus-panel,
-.active-card {
+.focus-panel {
 	padding: 16px;
 }
 
@@ -188,54 +189,151 @@ select:focus-visible {
 	gap: 12px;
 }
 
+/* Redesigned Active Timer Card */
 .active-card {
+	position: relative;
 	overflow: hidden;
-	border-color: color-mix(in srgb, var(--skill) 36%, var(--line));
-	background: var(--surface-strong);
-	color: #f7fbf6;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 16px;
+	padding: 24px;
+	background: linear-gradient(135deg, #111513 0%, #1e2521 100%);
+	color: #f5f6f1;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.active-card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(circle at 75% 25%, color-mix(in srgb, var(--skill) 18%, transparent) 0%, transparent 65%);
+	pointer-events: none;
+	z-index: 0;
 }
 
 .active-card h2,
 .active-card .label {
-	color: #f7fbf6;
+	color: #f5f6f1;
 }
 
 .active-card .label {
 	opacity: 0.72;
 }
 
+.active-indicator-group {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	position: relative;
+	z-index: 1;
+}
+
+.active-pulse-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--skill);
+	box-shadow: 0 0 0 0 color-mix(in srgb, var(--skill) 50%, transparent);
+	animation: pulse-dot-glow 2s infinite;
+}
+
+@keyframes pulse-dot-glow {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--skill) 70%, transparent);
+	}
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 8px transparent;
+	}
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+.timer-display-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: 28px 0;
+	text-align: center;
+	position: relative;
+	z-index: 1;
+}
+
 .timer-face {
-	margin: 12px 0;
 	font-family: var(--app-font-mono);
-	font-size: clamp(2.8rem, 16vw, 4.9rem);
-	font-weight: 800;
-	line-height: 1;
-	letter-spacing: 0;
+	font-size: clamp(3.2rem, 15vw, 4.6rem);
+	font-weight: 700;
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	color: #ffffff;
+	text-shadow: 0 0 24px color-mix(in srgb, var(--skill) 35%, transparent);
 }
 
 .motivation {
-	margin: 0;
-	color: #dce7df;
-	font-size: 0.98rem;
+	margin: 8px 0 0;
+	color: #b1bdb4;
+	font-size: 0.9rem;
+	letter-spacing: 0.01em;
 }
 
 .pomodoro-strip {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 8px;
-	margin-top: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin-top: 8px;
+	position: relative;
+	z-index: 1;
+	flex-wrap: wrap;
 }
 
-.pomodoro-strip span {
-	min-width: 0;
-	border: 1px solid rgba(255, 255, 255, 0.15);
-	border-radius: 8px;
-	padding: 8px;
-	background: rgba(255, 255, 255, 0.07);
-	color: #f7fbf6;
-	font-size: 0.78rem;
-	text-align: center;
-	overflow-wrap: anywhere;
+.pomo-pill {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 20px;
+	padding: 6px 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.pomo-pill.highlight {
+	background: color-mix(in srgb, var(--skill) 12%, rgba(255, 255, 255, 0.04));
+	border-color: color-mix(in srgb, var(--skill) 30%, rgba(255, 255, 255, 0.08));
+}
+
+.pomo-label {
+	color: #e2e8e4;
+	font-size: 0.76rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.pomo-pill.highlight .pomo-label {
+	color: var(--skill);
+}
+
+.stop-button {
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	color: #ffffff;
+	padding: 0 14px;
+	font-size: 0.82rem;
+	border-radius: 20px;
+	height: 34px;
+	min-height: 34px;
+	position: relative;
+	z-index: 1;
+}
+
+.stop-button:hover:not(:disabled) {
+	background: var(--danger);
+	border-color: var(--danger);
+	color: #ffffff;
 }
 
 .skill-list,
@@ -659,4 +757,122 @@ a.primary-button:active {
 	.dialog-backdrop {
 		align-items: center;
 	}
+}
+
+/* Install App Banner Styling */
+.install-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	background: linear-gradient(135deg, var(--surface) 0%, var(--surface-muted) 100%);
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 16px;
+	margin-bottom: 12px;
+	box-shadow: var(--shadow);
+	animation: slide-down 0.3s ease-out;
+}
+
+@keyframes slide-down {
+	from { transform: translateY(-10px); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+
+.install-banner-content {
+	flex: 1;
+}
+
+.install-banner-content h3 {
+	margin: 0 0 4px;
+	font-size: 0.95rem;
+	font-weight: 800;
+	color: var(--text);
+}
+
+.install-banner-content p {
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: var(--muted);
+}
+
+.install-button {
+	background: var(--text);
+	color: #ffffff;
+	border-radius: 20px;
+	height: 36px;
+	min-height: 36px;
+	padding: 0 16px;
+	font-size: 0.84rem;
+	flex-shrink: 0;
+}
+
+.install-button:hover {
+	background: var(--accent);
+	color: #ffffff;
+}
+
+/* Today Card with Share styling */
+.summary-card-with-share {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-width: 0;
+}
+
+.share-summary-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 1px solid var(--line);
+	background: var(--surface-muted);
+	color: var(--text);
+	cursor: pointer;
+	transition: background 150ms ease, border-color 150ms ease;
+	flex-shrink: 0;
+}
+
+.share-summary-button:hover {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #ffffff;
+}
+
+/* Settings notifications and footer styling */
+.active-setting {
+	background: var(--accent) !important;
+	color: #17110b !important;
+	border-color: var(--accent) !important;
+}
+
+.settings-info {
+	font-size: 0.84rem;
+	color: var(--muted);
+	margin: 0;
+	text-align: center;
+}
+
+.settings-footer {
+	text-align: center;
+	margin-top: 24px;
+	padding: 12px 0;
+	border-top: 1px solid var(--line);
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+
+.settings-footer a {
+	color: var(--text);
+	font-weight: 700;
+	text-decoration: underline;
+	transition: color 150ms ease;
+}
+
+.settings-footer a:hover {
+	color: var(--accent);
 }

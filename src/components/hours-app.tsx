@@ -2,6 +2,7 @@
 
 import {
 	Archive,
+	Bell,
 	CalendarDays,
 	Check,
 	Clock3,
@@ -13,6 +14,7 @@ import {
 	Plus,
 	RefreshCcw,
 	Settings,
+	Share2,
 	Square,
 	Target,
 	TimerReset,
@@ -115,6 +117,50 @@ export function HoursApp() {
 	const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
 	const importInputRef = useRef<HTMLInputElement | null>(null);
 
+	const [installPrompt, setInstallPrompt] = useState<any>(null);
+	const [isStandalone, setIsStandalone] = useState(false);
+	const [notificationsSupported, setNotificationsSupported] = useState(false);
+	const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
+	const lastPhaseRef = useRef<"work" | "break" | null>(null);
+
+	function playAlertSound() {
+		try {
+			const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+			const osc = ctx.createOscillator();
+			const gain = ctx.createGain();
+			
+			osc.type = "sine";
+			osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+			osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15); // E5
+			
+			gain.gain.setValueAtTime(0.15, ctx.currentTime);
+			gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+			
+			osc.connect(gain);
+			gain.connect(ctx.destination);
+			
+			osc.start();
+			osc.stop(ctx.currentTime + 0.5);
+		} catch (e) {
+			console.warn("Audio Context blocked or unsupported", e);
+		}
+	}
+
+	const activeSkills = useMemo(() => data.skills.filter((skill) => !skill.archivedAt), [data.skills]);
+	const archivedSkills = useMemo(() => data.skills.filter((skill) => skill.archivedAt), [data.skills]);
+	const activeSkill = data.activeSession ? data.skills.find((skill) => skill.id === data.activeSession?.skillId) : undefined;
+	const sessionsWithActive = useMemo(() => {
+		if (!data.activeSession) {
+			return data.sessions;
+		}
+		return [...data.sessions, activeToSession(data.activeSession, now)];
+	}, [data.activeSession, data.sessions, now]);
+	const todayKey = getDayKey(now);
+	const todayTotal = getTotalForDay(sessionsWithActive, todayKey);
+	const todayTotals = getTotalsBySkillForDay(sessionsWithActive, todayKey);
+	const selectedDaySlices = getDaySlices(sessionsWithActive, selectedDay);
+	const selectedDayTotal = getTotalForDay(sessionsWithActive, selectedDay);
+
 	useEffect(() => {
 		let mounted = true;
 
@@ -148,6 +194,34 @@ export function HoursApp() {
 		return () => window.clearInterval(timer);
 	}, []);
 
+	// Detect PWA Installation State
+	useEffect(() => {
+		const handleBeforeInstallPrompt = (e: Event) => {
+			e.preventDefault();
+			setInstallPrompt(e);
+		};
+		window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+		const handleAppInstalled = () => {
+			setInstallPrompt(null);
+			setIsStandalone(true);
+			setToast("Hours has been installed! Enjoy the offline tracker.");
+		};
+		window.addEventListener("appinstalled", handleAppInstalled);
+
+		const checkStandalone = () => {
+			const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone;
+			setIsStandalone(!!standalone);
+		};
+		checkStandalone();
+
+		return () => {
+			window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+			window.removeEventListener("appinstalled", handleAppInstalled);
+		};
+	}, []);
+
+	// Register Service Worker
 	useEffect(() => {
 		if (!("serviceWorker" in navigator)) {
 			return;
@@ -158,6 +232,186 @@ export function HoursApp() {
 		});
 	}, []);
 
+	// Detect Notification Support & Permission State
+	useEffect(() => {
+		const supported = "Notification" in window && "serviceWorker" in navigator;
+		setNotificationsSupported(supported);
+		if (supported) {
+			setNotificationPermission(Notification.permission);
+		}
+	}, []);
+
+	// Handle App Badging based on active session
+	useEffect(() => {
+		if ("setAppBadge" in navigator) {
+			if (data.activeSession) {
+				navigator.setAppBadge(1).catch(() => {});
+			} else {
+				navigator.clearAppBadge().catch(() => {});
+			}
+		}
+	}, [data.activeSession]);
+
+	// Background active session notification on visibility change
+	useEffect(() => {
+		if (!notificationsSupported || notificationPermission !== "granted" || !data.activeSession) {
+			return;
+		}
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "hidden") {
+				const activeSkill = data.skills.find(s => s.id === data.activeSession?.skillId);
+				if (activeSkill) {
+					navigator.serviceWorker.ready.then((reg) => {
+						reg.showNotification(`Tracking session: ${activeSkill.name}`, {
+							body: `Session started at ${new Date(data.activeSession!.startedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}. Keep focused!`,
+							icon: "/icon-192.png",
+							badge: "/favicon.svg",
+							tag: "active-session",
+							silent: true,
+							requireInteraction: false,
+						});
+					});
+				}
+			} else {
+				// Clear background active session notification on return
+				navigator.serviceWorker.ready.then((reg) => {
+					reg.getNotifications({ tag: "active-session" }).then((notifications) => {
+						for (const notification of notifications) {
+							notification.close();
+						}
+					});
+				});
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		};
+	}, [notificationsSupported, notificationPermission, data.activeSession, data.skills]);
+
+	// Pomodoro phase transition notifications and alert chimes
+	useEffect(() => {
+		if (!data.activeSession || !activeSkill) {
+			lastPhaseRef.current = null;
+			return;
+		}
+
+		const pomodoro = getPomodoroPhase(activeSkill, data.activeSession, now);
+		if (pomodoro.enabled) {
+			const currentPhase = pomodoro.phase;
+			if (lastPhaseRef.current && lastPhaseRef.current !== currentPhase) {
+				playAlertSound();
+				
+				if (notificationsSupported && notificationPermission === "granted") {
+					const title = currentPhase === "work" ? "Time to focus!" : "Time for a break!";
+					const body = currentPhase === "work" 
+						? `Get back to practicing ${activeSkill.name}.` 
+						: `Take a well-deserved break after focusing on ${activeSkill.name}.`;
+					
+					navigator.serviceWorker.ready.then((reg) => {
+						reg.showNotification(title, {
+							body,
+							icon: "/icon-192.png",
+							badge: "/favicon.svg",
+							vibrate: [200, 100, 200],
+							tag: "pomodoro-alert",
+						} as any);
+					});
+				}
+				
+				setToast(currentPhase === "work" ? `Focus phase started for ${activeSkill.name}!` : `Break phase started!`);
+			}
+			lastPhaseRef.current = currentPhase;
+		} else {
+			lastPhaseRef.current = null;
+		}
+	}, [now, data.activeSession, activeSkill, notificationsSupported, notificationPermission]);
+
+	async function requestNotificationPermission() {
+		if (!notificationsSupported) return;
+		try {
+			const permission = await Notification.requestPermission();
+			setNotificationPermission(permission);
+			if (permission === "granted") {
+				setToast("Notifications enabled!");
+			} else if (permission === "denied") {
+				setToast("Notifications blocked by browser.");
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	async function handleInstallClick() {
+		if (!installPrompt) {
+			return;
+		}
+		try {
+			installPrompt.prompt();
+			const { outcome } = await installPrompt.userChoice;
+			if (outcome === "accepted") {
+				setInstallPrompt(null);
+			}
+		} catch (error) {
+			console.error("Installation failed", error);
+		}
+	}
+
+	async function handleShare() {
+		const shareData = {
+			title: "Hours - Skill Time Tracking App",
+			text: "Track skill practice, visualize productive time, and hit learning goals offline.",
+			url: "https://hours.debo.life",
+		};
+		if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+			try {
+				await navigator.share(shareData);
+				setToast("Shared successfully!");
+			} catch (error) {
+				if ((error as Error).name !== "AbortError") {
+					navigator.clipboard.writeText("https://hours.debo.life");
+					setToast("Link copied to clipboard!");
+				}
+			}
+		} else {
+			try {
+				await navigator.clipboard.writeText("https://hours.debo.life");
+				setToast("Link copied to clipboard!");
+			} catch (e) {
+				setToast("Failed to copy link.");
+			}
+		}
+	}
+
+	async function handleShareToday(totalMs: number) {
+		const durationText = formatDuration(totalMs);
+		const shareData = {
+			title: "My Practice Goals on Hours",
+			text: `Today I focused on my skills for ${durationText}! Keep track of your goals offline with Hours.`,
+			url: "https://hours.debo.life",
+		};
+		if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+			try {
+				await navigator.share(shareData);
+				setToast("Shared today's progress!");
+			} catch (error) {
+				if ((error as Error).name !== "AbortError") {
+					navigator.clipboard.writeText(`Today I focused on my skills for ${durationText} on Hours! https://hours.debo.life`);
+					setToast("Progress copied to clipboard.");
+				}
+			}
+		} else {
+			try {
+				await navigator.clipboard.writeText(`Today I focused on my skills for ${durationText} on Hours! https://hours.debo.life`);
+				setToast("Progress copied to clipboard!");
+			} catch (e) {
+				setToast("Failed to copy progress.");
+			}
+		}
+	}
+
 	useEffect(() => {
 		if (!toast) {
 			return;
@@ -166,20 +420,6 @@ export function HoursApp() {
 		return () => window.clearTimeout(timer);
 	}, [toast]);
 
-	const activeSkills = useMemo(() => data.skills.filter((skill) => !skill.archivedAt), [data.skills]);
-	const archivedSkills = useMemo(() => data.skills.filter((skill) => skill.archivedAt), [data.skills]);
-	const activeSkill = data.activeSession ? data.skills.find((skill) => skill.id === data.activeSession?.skillId) : undefined;
-	const sessionsWithActive = useMemo(() => {
-		if (!data.activeSession) {
-			return data.sessions;
-		}
-		return [...data.sessions, activeToSession(data.activeSession, now)];
-	}, [data.activeSession, data.sessions, now]);
-	const todayKey = getDayKey(now);
-	const todayTotal = getTotalForDay(sessionsWithActive, todayKey);
-	const todayTotals = getTotalsBySkillForDay(sessionsWithActive, todayKey);
-	const selectedDaySlices = getDaySlices(sessionsWithActive, selectedDay);
-	const selectedDayTotal = getTotalForDay(sessionsWithActive, selectedDay);
 
 	function resetSkillForm() {
 		setEditingSkillId(null);
@@ -450,6 +690,19 @@ export function HoursApp() {
 			</header>
 
 			{storageError ? <div className="notice danger">{storageError}</div> : null}
+			
+			{!isStandalone && installPrompt ? (
+				<div className="install-banner">
+					<div className="install-banner-content">
+						<h3>Install Hours App</h3>
+						<p>Get offline access, home screen shortcuts, and smooth background notifications.</p>
+					</div>
+					<button className="primary-button install-button" type="button" onClick={handleInstallClick}>
+						Install App
+					</button>
+				</div>
+			) : null}
+
 			{!ready ? <div className="notice">Loading your local timeline...</div> : null}
 
 			<main className="app-main">
@@ -468,6 +721,7 @@ export function HoursApp() {
 						onManual={() => openManualEntry(todayKey)}
 						onStop={stopActiveSession}
 						onToggleTimer={toggleTimer}
+						onShareToday={handleShareToday}
 					/>
 				) : null}
 
@@ -502,7 +756,16 @@ export function HoursApp() {
 				) : null}
 
 				{tab === "settings" ? (
-					<SettingsView busy={busy} onClear={handleClearData} onExport={handleExport} onImportClick={() => importInputRef.current?.click()} />
+					<SettingsView
+						busy={busy}
+						onClear={handleClearData}
+						onExport={handleExport}
+						onImportClick={() => importInputRef.current?.click()}
+						notificationsSupported={notificationsSupported}
+						notificationPermission={notificationPermission}
+						onRequestNotificationPermission={requestNotificationPermission}
+						onShare={handleShare}
+					/>
 				) : null}
 			</main>
 
@@ -545,6 +808,7 @@ function TodayView({
 	onManual,
 	onStop,
 	onToggleTimer,
+	onShareToday,
 }: {
 	activeSession: ActiveSession | null;
 	activeSkill?: Skill;
@@ -559,13 +823,26 @@ function TodayView({
 	onManual: () => void;
 	onStop: () => void;
 	onToggleTimer: (skill: Skill) => void;
+	onShareToday: (totalMs: number) => void;
 }) {
 	return (
 		<div className="view-stack">
 			<section className="summary-band">
-				<div>
-					<p className="label">Today</p>
-					<strong>{formatDuration(todayTotal)}</strong>
+				<div className="summary-card-with-share">
+					<div>
+						<p className="label">Today</p>
+						<strong>{formatDuration(todayTotal)}</strong>
+					</div>
+					{todayTotal > 0 ? (
+						<button
+							className="share-summary-button"
+							type="button"
+							aria-label="Share today's progress"
+							onClick={() => onShareToday(todayTotal)}
+						>
+							<Share2 size={16} />
+						</button>
+					) : null}
 				</div>
 				<div>
 					<p className="label">Skills touched</p>
@@ -644,22 +921,35 @@ function ActiveTimerCard({
 	return (
 		<section className="active-card" style={{ "--skill": skill.color } as CSSProperties}>
 			<div className="active-topline">
-				<div>
-					<p className="label">In session</p>
-					<h2>{skill.name}</h2>
+				<div className="active-indicator-group">
+					<span className="active-pulse-dot" />
+					<div>
+						<p className="label">In session</p>
+						<h2>{skill.name}</h2>
+					</div>
 				</div>
 				<button className="stop-button" type="button" onClick={onStop} disabled={busy}>
-					<Square size={18} />
-					Stop
+					<Square size={14} />
+					<span>Stop</span>
 				</button>
 			</div>
-			<div className="timer-face">{formatClock(elapsed)}</div>
-			<p className="motivation">{motivation}</p>
+			
+			<div className="timer-display-container">
+				<div className="timer-face">{formatClock(elapsed)}</div>
+				<p className="motivation">{motivation}</p>
+			</div>
+
 			{pomodoro.enabled ? (
 				<div className="pomodoro-strip">
-					<span>{pomodoro.label}</span>
-					<span>Cycle {pomodoro.cycleIndex}</span>
-					<span>{formatClock(pomodoro.remainingInPhaseMs)} left</span>
+					<div className="pomo-pill">
+						<span className="pomo-label">{pomodoro.label}</span>
+					</div>
+					<div className="pomo-pill">
+						<span className="pomo-label">Cycle {pomodoro.cycleIndex}</span>
+					</div>
+					<div className="pomo-pill highlight">
+						<span className="pomo-label">{formatClock(pomodoro.remainingInPhaseMs)} left</span>
+					</div>
 				</div>
 			) : null}
 		</section>
@@ -987,14 +1277,65 @@ function SettingsView({
 	onClear,
 	onExport,
 	onImportClick,
+	notificationsSupported,
+	notificationPermission,
+	onRequestNotificationPermission,
+	onShare,
 }: {
 	busy: boolean;
 	onClear: () => void;
 	onExport: () => void;
 	onImportClick: () => void;
+	notificationsSupported: boolean;
+	notificationPermission: NotificationPermission;
+	onRequestNotificationPermission: () => void;
+	onShare: () => void;
 }) {
 	return (
 		<div className="view-stack">
+			<section className="section-block">
+				<div className="section-heading">
+					<div>
+						<p className="label">System</p>
+						<h2>Notifications</h2>
+					</div>
+				</div>
+				<div className="settings-actions">
+					{notificationsSupported ? (
+						<button
+							className={`secondary-button full ${notificationPermission === "granted" ? "active-setting" : ""}`}
+							type="button"
+							onClick={onRequestNotificationPermission}
+							disabled={notificationPermission === "denied"}
+						>
+							<Bell size={18} />
+							{notificationPermission === "granted"
+								? "Notifications Enabled"
+								: notificationPermission === "denied"
+								? "Permission Denied"
+								: "Enable Notifications"}
+						</button>
+					) : (
+						<p className="settings-info">Notifications not supported on this browser.</p>
+					)}
+				</div>
+			</section>
+
+			<section className="section-block">
+				<div className="section-heading">
+					<div>
+						<p className="label">Spread the word</p>
+						<h2>Share app</h2>
+					</div>
+				</div>
+				<div className="settings-actions">
+					<button className="secondary-button full" type="button" onClick={onShare}>
+						<Share2 size={18} />
+						Share Hours App
+					</button>
+				</div>
+			</section>
+
 			<section className="section-block">
 				<div className="section-heading">
 					<div>
@@ -1036,6 +1377,15 @@ function SettingsView({
 					</a>
 				</div>
 			</section>
+
+			<footer className="settings-footer">
+				<p>
+					Hours Tracker ·{" "}
+					<a href="https://hours.debo.life" target="_blank" rel="noopener noreferrer">
+						hours.debo.life
+					</a>
+				</p>
+			</footer>
 		</div>
 	);
 }
