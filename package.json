@@ -2,9 +2,19 @@
   "name": "hours",
   "version": "1.0.0",
   "description": "Digital Wellbeing app for skill tracking",
-  "main": "index.html",
+  "private": true,
   "scripts": {
-    "dev": "npx sirv-cli ./ --dev --port 5173 --host"
+    "dev": "next dev",
+    "assets": "node scripts/generate-assets.mjs",
+    "build": "bun run assets && next build",
+    "opennext:build": "bun run assets && opennextjs-cloudflare build",
+    "preview": "bun run assets && opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:dry": "bun run assets && opennextjs-cloudflare build && wrangler deploy --dry-run",
+    "deploy": "bun run assets && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "keywords": [
     "productivity",
@@ -14,8 +24,25 @@
   ],
   "author": "Antigravity",
   "license": "ISC",
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "next": "^16.2.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@opennextjs/cloudflare": "^1.19.11",
+    "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15",
     "wrangler": "^4.98.0"
   }
 }
