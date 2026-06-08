@@ -7,7 +7,7 @@ This app is essentially a **Digital Wellbeing app for skills instead of apps**.
 People often want to learn skills like DSA, Piano, Coding, YouTube Content Creation, Reading, etc., but they don't know where their time is actually going.
 
 Hours helps users **track, visualize, and improve the time they spend on their skills**.
-
+- https://hours.debo.life/
 ---
 
 # How It Works
