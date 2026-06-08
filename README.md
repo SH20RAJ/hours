@@ -1,12 +1,12 @@
 This app is essentially a **Digital Wellbeing app for skills instead of apps**.
 
-# Houry — Skill Time Tracking App
+# Hours — Skill Time Tracking App
 
 ### Core Idea
 
 People often want to learn skills like DSA, Piano, Coding, YouTube Content Creation, Reading, etc., but they don't know where their time is actually going.
 
-Houry helps users **track, visualize, and improve the time they spend on their skills**.
+Hours helps users **track, visualize, and improve the time they spend on their skills**.
 
 ---
 
@@ -216,4 +216,4 @@ This creates a personal history of learning.
 
 ### One-Line Pitch
 
-**"Houry helps people track, visualize, and achieve their skill-learning goals by acting as a Digital Wellbeing app for personal growth."**
+**"Hours helps people track, visualize, and achieve their skill-learning goals by acting as a Digital Wellbeing app for personal growth."**
