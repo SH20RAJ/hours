@@ -1339,6 +1339,20 @@ function SettingsView({
 			<section className="section-block">
 				<div className="section-heading">
 					<div>
+						<p className="label">Information</p>
+						<h2>About</h2>
+					</div>
+				</div>
+				<div className="settings-actions">
+					<a className="secondary-button full" href="/about">
+						About Hours Tracker
+					</a>
+				</div>
+			</section>
+
+			<section className="section-block">
+				<div className="section-heading">
+					<div>
 						<p className="label">Local-first</p>
 						<h2>Backup</h2>
 					</div>

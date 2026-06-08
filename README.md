@@ -217,3 +217,16 @@ This creates a personal history of learning.
 ### One-Line Pitch
 
 **"Hours helps people track, visualize, and achieve their skill-learning goals by acting as a Digital Wellbeing app for personal growth."**
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from developers, designers, and writers! 
+- Please read our **[Contributing Guide](file:///Users/shaswatraj/Desktop/hours/CONTRIBUTING.md)** to get your development environment set up and read about code structure.
+- Visit the project repository at **[github.com/sh20raj/hours](https://github.com/sh20raj/hours)** to open issues and pull requests.
+
+## 📄 License
+
+Hours is released under the permissive **MIT License**. You are free to copy, modify, distribute, and run this application for personal or commercial purposes.
+
