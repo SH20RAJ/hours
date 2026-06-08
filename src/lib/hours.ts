@@ -94,7 +94,6 @@ export const POMODORO_LABELS: Record<PomodoroPreset, string> = {
 
 export const SKILL_COLORS = ["#ef8f45", "#6d8cff", "#52b788", "#c084fc", "#f06292", "#2bb3a3", "#e6b422", "#7c9a75"];
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
 
 const pad2 = (value: number) => String(value).padStart(2, "0");

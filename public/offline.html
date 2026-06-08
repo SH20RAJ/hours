@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#111513" />
+		<title>Hours is offline</title>
+		<style>
+			:root {
+				color-scheme: light;
+				--ink: #111513;
+				--paper: #f5f6f1;
+				--muted: #66736b;
+				--accent: #ef8f45;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				display: grid;
+				min-height: 100dvh;
+				margin: 0;
+				place-items: center;
+				background: var(--paper);
+				color: var(--ink);
+				font-family: Arial, Helvetica, sans-serif;
+				padding: 24px;
+			}
+
+			main {
+				width: min(100%, 420px);
+				border: 1px solid #dfe3db;
+				border-radius: 8px;
+				background: #ffffff;
+				padding: 24px;
+				box-shadow: 0 14px 40px rgba(25, 31, 27, 0.1);
+			}
+
+			svg {
+				display: block;
+				margin-bottom: 18px;
+			}
+
+			h1 {
+				margin: 0 0 8px;
+				font-size: 1.65rem;
+				line-height: 1.1;
+			}
+
+			p {
+				margin: 0;
+				color: var(--muted);
+				line-height: 1.5;
+			}
+
+			a {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 42px;
+				margin-top: 18px;
+				border-radius: 8px;
+				background: var(--ink);
+				color: #ffffff;
+				font-weight: 800;
+				padding: 0 14px;
+				text-decoration: none;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<svg width="58" height="58" viewBox="0 0 58 58" role="img" aria-label="Hours">
+				<rect width="58" height="58" rx="12" fill="#111513" />
+				<circle cx="29" cy="29" r="18" fill="none" stroke="#ef8f45" stroke-width="5" />
+				<path d="M29 17v13l10 6" fill="none" stroke="#f5f6f1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+			<h1>Hours is offline</h1>
+			<p>Your saved skills and sessions are still on this device. Reopen the app when the connection is back, or try the cached app shell.</p>
+			<a href="/">Open Hours</a>
+		</main>
+	</body>
+</html>

@@ -96,7 +96,8 @@ const defaultManualForm = (dayKey: string, skillId = ""): ManualFormState => ({
 	note: "",
 });
 
-const donateUrl = process.env.NEXT_PUBLIC_DONATE_URL;
+const PAYPAL_DONATION_URL = "https://www.paypal.com/paypalme/sh20raj";
+const RAZORPAY_PAYMENT_URL = "https://razorpay.me/@iamsh";
 
 export function HoursApp() {
 	const [data, setData] = useState<HoursData>(emptyData);
@@ -117,13 +118,13 @@ export function HoursApp() {
 	useEffect(() => {
 		let mounted = true;
 
-		if (!isIndexedDbAvailable()) {
-			setStorageError("This browser does not support IndexedDB, so Hours cannot save offline data here.");
-			setReady(true);
-			return;
-		}
-
-		loadHoursData()
+		Promise.resolve()
+			.then(() => {
+				if (!isIndexedDbAvailable()) {
+					throw new Error("This browser does not support IndexedDB, so Hours cannot save offline data here.");
+				}
+				return loadHoursData();
+			})
 			.then((loaded) => {
 				if (mounted) {
 					setData(loaded);
@@ -1024,17 +1025,16 @@ function SettingsView({
 						<h2>Donate</h2>
 					</div>
 				</div>
-				{donateUrl ? (
-					<a className="primary-button full" href={donateUrl} target="_blank" rel="noreferrer">
+				<div className="settings-actions">
+					<a className="primary-button full" href={PAYPAL_DONATION_URL} target="_blank" rel="noreferrer">
 						<Heart size={18} />
-						Support Hours
+						Donate with PayPal
 					</a>
-				) : (
-					<button className="primary-button full" type="button" disabled>
+					<a className="secondary-button full" href={RAZORPAY_PAYMENT_URL} target="_blank" rel="noreferrer">
 						<Heart size={18} />
-						Donate link unavailable
-					</button>
-				)}
+						Pay with Razorpay
+					</a>
+				</div>
 			</section>
 		</div>
 	);

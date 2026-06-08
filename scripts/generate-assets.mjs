@@ -35,10 +35,11 @@ function ogSvg() {
 		<circle cx="250" cy="315" r="14" fill="${colors.green}"/>
 		<text x="420" y="275" font-family="Arial, Helvetica, sans-serif" font-size="104" font-weight="900" fill="${colors.paper}">Hours</text>
 		<text x="424" y="350" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" fill="${colors.accent}">Digital wellbeing for skills</text>
-		<text x="424" y="414" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#dbe4dc">Track practice, visualize your day, and hit your learning goals.</text>
-		<rect x="424" y="454" width="118" height="12" rx="6" fill="${colors.green}"/>
-		<rect x="558" y="454" width="168" height="12" rx="6" fill="${colors.blue}"/>
-		<rect x="742" y="454" width="92" height="12" rx="6" fill="${colors.accent}"/>
+		<text x="424" y="404" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#dbe4dc">Track practice, visualize your day,</text>
+		<text x="424" y="444" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#dbe4dc">and hit your learning goals offline.</text>
+		<rect x="424" y="486" width="118" height="12" rx="6" fill="${colors.green}"/>
+		<rect x="558" y="486" width="168" height="12" rx="6" fill="${colors.blue}"/>
+		<rect x="742" y="486" width="92" height="12" rx="6" fill="${colors.accent}"/>
 	</svg>`;
 }
 

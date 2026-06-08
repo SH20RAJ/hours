@@ -13,13 +13,15 @@
 	--green: #2f8f64;
 	--danger: #c44242;
 	--shadow: 0 14px 40px rgba(25, 31, 27, 0.1);
+	--app-font-sans: Arial, Helvetica, sans-serif;
+	--app-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 @theme inline {
 	--color-background: var(--background);
 	--color-foreground: var(--text);
-	--font-sans: var(--font-geist-sans);
-	--font-mono: var(--font-geist-mono);
+	--font-sans: var(--app-font-sans);
+	--font-mono: var(--app-font-mono);
 }
 
 * {
@@ -36,7 +38,7 @@ body {
 	margin: 0;
 	background: var(--background);
 	color: var(--text);
-	font-family: Arial, Helvetica, sans-serif;
+	font-family: var(--app-font-sans);
 }
 
 button,
@@ -204,7 +206,7 @@ select:focus-visible {
 
 .timer-face {
 	margin: 12px 0;
-	font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-family: var(--app-font-mono);
 	font-size: clamp(2.8rem, 16vw, 4.9rem);
 	font-weight: 800;
 	line-height: 1;
@@ -555,7 +557,7 @@ a.primary-button:active {
 	display: grid;
 	gap: 4px;
 	color: var(--muted);
-	font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-family: var(--app-font-mono);
 	font-size: 0.72rem;
 }
 
