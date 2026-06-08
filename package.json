@@ -1,0 +1,21 @@
+{
+  "name": "houry",
+  "version": "1.0.0",
+  "description": "Digital Wellbeing app for skill tracking",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx sirv-cli ./ --dev --port 5173 --host"
+  },
+  "keywords": [
+    "productivity",
+    "tracking",
+    "skills",
+    "pomodoro"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "wrangler": "^4.98.0"
+  }
+}
